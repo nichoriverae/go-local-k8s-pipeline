@@ -32,7 +32,9 @@ func main() {
 	err = parseConfig(rootDir, configFileName)
 
 	// walk returns either a msg to changeChan or errChan
-	go walk(config)()
+	go func() {
+		change, err := walk(config)
+	}()
 }
 
 type pipelineConfig struct {
@@ -56,13 +58,13 @@ func parseConfig(rootDir string, configFilePath string) (config pipelineConfig, 
 	return
 }
 
-type errChan chan error
-type changeChan chan map[string]bool
+type errChan <-chan error
+type changeChan <-chan map[string]bool
 
 // walk directories and watch for changes
 // run the watcher in a poll loop
 // type WalkFunc(path string, info os.FileInfo, err error) error
-func (pc pipelineConfig) walk(rootDir string, k8sDir string, k8sPattern string, dockerWalker, k8sWalker filepath.WalkFunc) (errChan, changeChan) {
+func (pc pipelineConfig) walk(rootDir string, k8sDir string, k8sPattern string, dockerWalker, k8sWalker filepath.WalkFunc) (change changeChan, err errChan) {
 	// filepath.Walk(rootdirectory, walkfunc())
 	//filepath.Match func Match(pattern, name string) (matched bool, err error)
 	// match for files in folders named k8
